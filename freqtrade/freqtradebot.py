@@ -523,6 +523,18 @@ class FreqtradeBot(LoggingMixin):
             prev_trade_state = trade.is_open
             prev_trade_amount = trade.amount
             for order in orders:
+                order_info = order["info"]
+                if order_info["positionSide"] == "BOTH":
+                    if float(order_info["positionAmt"]) < 0:
+                        is_short = True
+                    else:
+                        is_short = (order_info["positionSide"] == "SHORT")
+                if trade.is_short != is_short:
+                    logger.warning(
+                        f"Trade {trade.id} is short={trade.is_short} but order is long={is_short}"
+                    )
+                    continue
+
                 trade_order = [o for o in trade.orders if o.order_id == order["id"]]
 
                 if trade_order:
@@ -886,6 +898,15 @@ class FreqtradeBot(LoggingMixin):
         trade_side: LongShort = "short" if is_short else "long"
         pos_adjust = trade is not None
 
+        # 新增 支持双向持仓
+        # 持仓方向
+        position_side = "BOTH"
+        if self.config["dual_side"] == True:
+            if is_short:
+                position_side = "SHORT"
+            else:
+                position_side = "LONG"
+
         enter_limit_requested, stake_amount, leverage = self.get_valid_enter_price_and_stake(
             pair, price, stake_amount, trade_side, enter_tag, trade, mode, leverage_
         )
@@ -932,6 +953,7 @@ class FreqtradeBot(LoggingMixin):
             reduceOnly=False,
             time_in_force=time_in_force,
             leverage=leverage,
+            position_side = position_side,    # 新增支持双向持仓
         )
         order_obj = Order.parse_from_ccxt_object(order, pair, side, amount, enter_limit_requested)
         order_obj.ft_order_tag = enter_tag
@@ -2019,6 +2041,13 @@ class FreqtradeBot(LoggingMixin):
 
         try:
             # Execute sell and update trade record
+            # 新增 双向持仓
+            position_side = "BOTH"
+            if self.config["dual_side"]:
+                if trade.is_short:
+                    position_side = "SHORT"
+                else:
+                    position_side = "LONG"
             order = self.exchange.create_order(
                 pair=trade.pair,
                 ordertype=order_type,
@@ -2028,6 +2057,7 @@ class FreqtradeBot(LoggingMixin):
                 leverage=trade.leverage,
                 reduceOnly=self.trading_mode == TradingMode.FUTURES,
                 time_in_force=time_in_force,
+                position_side=position_side,      # 新增双向持仓
             )
         except InsufficientFundsError as e:
             logger.warning(f"Unable to place order {e}.")

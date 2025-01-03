@@ -137,7 +137,7 @@ class Wallets:
                 )
         else:
             for position in open_trades:
-                _positions[position.pair] = PositionWallet(
+                _positions[position.pair+ "_" + position.trade_direction] = PositionWallet(
                     position.pair,
                     position=position.amount,
                     leverage=position.leverage,
@@ -198,7 +198,7 @@ class Wallets:
             size = self._exchange._contracts_to_amount(symbol, position["contracts"])
             collateral = safe_value_fallback(position, "collateral", "initialMargin", 0.0)
             leverage = position.get("leverage")
-            _parsed_positions[symbol] = PositionWallet(
+            _parsed_positions[symbol+"_"+position["side"]] = PositionWallet(
                 symbol,
                 position=size,
                 leverage=leverage,
@@ -242,7 +242,8 @@ class Wallets:
             wallet_amount: float = self.get_total(trade.safe_base_currency) * (2 - 0.981)
         else:
             # wallet_amount: float = self.wallets.get_free(trade.safe_base_currency)
-            position = self._positions.get(trade.pair)
+            side = "short" if trade.is_short else "long"
+            position = self._positions.get(trade.pair + "_" + side)
             if position is None:
                 # We don't own anything :O
                 return False
