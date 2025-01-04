@@ -1234,15 +1234,15 @@ class Exchange:
         leverage: float,
         reduceOnly: bool,
         time_in_force: str = "GTC",
-        positon_side: str = "BOTH",     # 新增持仓模式
+        position_side: str = "BOTH",     # 新增持仓模式
     ) -> dict:
         params = self._params.copy()
         if time_in_force != "GTC" and ordertype != "market":
             params.update({"timeInForce": time_in_force.upper()})
         if reduceOnly:
             params.update({"reduceOnly": True})
-        if positon_side != "":
-            params.update({"positionSide": positon_side.upper()})
+        if position_side != "":
+            params.update({"positionSide": position_side.upper()})
         # 如果是双向持仓模式，删除 reduceOnly 参数
         if self.config["dual_side"]:
             params.pop("reduceOnly", None)
@@ -1266,7 +1266,7 @@ class Exchange:
         leverage: float,
         reduceOnly: bool = False,
         time_in_force: str = "GTC",
-        positon_side: str = "BOTH",      # 新增持仓模式
+        position_side: str = "BOTH",      # 新增持仓模式
     ) -> CcxtOrder:
         if self._config["dry_run"]:
             dry_order = self.create_dry_run_order(
@@ -1274,7 +1274,7 @@ class Exchange:
             )
             return dry_order
 
-        params = self._get_params(side, ordertype, leverage, reduceOnly, time_in_force, positon_side)
+        params = self._get_params(side, ordertype, leverage, reduceOnly, time_in_force, position_side)
 
         try:
             # Set the precision for amount and price(rate) as accepted by the exchange
