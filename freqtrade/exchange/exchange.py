@@ -1244,7 +1244,7 @@ class Exchange:
         if position_side != "":
             params.update({"positionSide": position_side.upper()})
         # 如果是双向持仓模式，删除 reduceOnly 参数
-        if self.config["dual_side"]:
+        if self._config["dual_side"]:
             params.pop("reduceOnly", None)
         return params
 
