@@ -3641,9 +3641,15 @@ class Exchange:
             )
         else:
             positions = self.fetch_positions(pair)
-            if len(positions) > 0:
-                pos = positions[0]
-                liquidation_price = pos["liquidationPrice"]
+            # if len(positions) > 0:
+            #     pos = positions[0]
+            #     liquidation_price = pos["liquidationPrice"]
+            # 双向持仓需考虑,考虑到交易方向
+            side = "short" if is_short else "long"
+            for pos in positions:
+                pside = pos["side"]
+                if pside == side:
+                    liquidation_price = pos["liquidationPrice"]
 
         if liquidation_price is not None:
             buffer_amount = abs(open_rate - liquidation_price) * self.liquidation_buffer

@@ -630,10 +630,11 @@ class FreqtradeBot(LoggingMixin):
             self.log_once("Active pair whitelist is empty.", logger.info)
             return trades_created
         # Remove pairs for currently opened trades from the whitelist
-        for trade in Trade.get_open_trades():
-            if trade.pair in whitelist:
-                whitelist.remove(trade.pair)
-                logger.debug("Ignoring %s in pair whitelist", trade.pair)
+        if not self.config.get("dual_side", False):
+            for trade in Trade.get_open_trades():
+                if trade.pair in whitelist:
+                    whitelist.remove(trade.pair)
+                    logger.debug("Ignoring %s in pair whitelist", trade.pair)
 
         if not whitelist:
             self.log_once(
@@ -707,6 +708,13 @@ class FreqtradeBot(LoggingMixin):
                 else:
                     self.log_once(f"Pair {pair} is currently locked.", logger.info)
                 return False
+            # todo: 修改成pairlock的形式
+            # 按说上面的代码应该锁住了，不知道为什么锁不住
+            if self.config.get("dual_side", False):
+                for trade in Trade.get_open_trades():
+                    if trade.pair == pair and trade.is_short == (signal == SignalDirection.SHORT):
+                        logger.info(f"{pair} {trade.is_short}已经建仓，不用重复下单建仓")
+                        return False
             stake_amount = self.wallets.get_trade_stake_amount(
                 pair, self.config["max_open_trades"], self.edge
             )
