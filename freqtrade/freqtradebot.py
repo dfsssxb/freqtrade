@@ -524,11 +524,12 @@ class FreqtradeBot(LoggingMixin):
             prev_trade_amount = trade.amount
             for order in orders:
                 order_info = order["info"]
+                is_short = False
                 if order_info["positionSide"] == "BOTH":
                     if float(order_info["positionAmt"]) < 0:
                         is_short = True
-                    else:
-                        is_short = (order_info["positionSide"] == "SHORT")
+                else:
+                    is_short = (order_info["positionSide"] == "SHORT")
                 if trade.is_short != is_short:
                     logger.warning(
                         f"Trade {trade.id} is short={trade.is_short} but order is long={is_short}"
