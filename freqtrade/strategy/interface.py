@@ -1508,7 +1508,9 @@ class IStrategy(ABC, HyperStrategyMixin):
 
             return ExitCheckTuple(exit_type=exit_type)
 
-        if liq_higher_long or liq_lower_short:
+        # 双向持仓，不需要检测清算价格。
+        # 因为双向持仓，清算价格会相同，要么太高，要么太低，会引发清算
+        if not self.config.get("dual_side", False) and (liq_higher_long or liq_lower_short):
             logger.debug(f"{trade.pair} - Liquidation price hit. exit_type=ExitType.LIQUIDATION")
             return ExitCheckTuple(exit_type=ExitType.LIQUIDATION)
 

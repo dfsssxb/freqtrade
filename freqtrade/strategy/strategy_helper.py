@@ -54,11 +54,12 @@ def merge_informative_pair(
                     informative[date_column] + pd.offsets.MonthBegin(1)
                 ) - pd.to_timedelta(minutes, "m")
             else:
-                informative["date_merge"] = (
-                    informative[date_column]
-                    + pd.to_timedelta(minutes_inf, "m")
-                    - pd.to_timedelta(minutes, "m")
-                )
+                # informative["date_merge"] = (
+                #     informative[date_column]
+                #     + pd.to_timedelta(minutes_inf, "m")
+                #     - pd.to_timedelta(minutes, "m")
+                # )
+                informative["date_merge"] = (informative[date_column])
         else:
             informative["date_merge"] = informative[date_column]
     else:

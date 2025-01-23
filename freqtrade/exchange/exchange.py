@@ -2540,7 +2540,8 @@ class Exchange:
         logger.debug("Refreshing candle (OHLCV) data for %d pairs", len(pair_list))
 
         # Gather coroutines to run
-        ohlcv_dl_jobs, cached_pairs = self._build_ohlcv_dl_jobs(pair_list, since_ms, cache)
+        is_cache = self._config.get("cache_data", True)
+        ohlcv_dl_jobs, cached_pairs = self._build_ohlcv_dl_jobs(pair_list, since_ms, is_cache)
 
         results_df = {}
         # Chunk requests into batches of 100 to avoid overwhelming ccxt Throttling
