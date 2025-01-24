@@ -1420,6 +1420,7 @@ class LocalTrade:
         is_open: bool | None = None,
         open_date: datetime | None = None,
         close_date: datetime | None = None,
+        is_short: bool | None = None,
     ) -> list["LocalTrade"]:
         """
         Helper function to query Trades.
@@ -1454,7 +1455,8 @@ class LocalTrade:
             sel_trades = [
                 trade for trade in sel_trades if trade.close_date and trade.close_date > close_date
             ]
-
+        if is_short is not None:
+            sel_trades = [trade for trade in sel_trades if trade.is_short == is_short]
         return sel_trades
 
     @staticmethod
@@ -1495,6 +1497,17 @@ class LocalTrade:
         Retrieve open trades
         """
         return Trade.get_trades_proxy(is_open=True)
+    
+    @staticmethod
+    def get_open_trades_with_pair_side_opendate(
+            pair: str | None,
+            is_short: bool | None,
+            open_date: datetime | None = None,
+        ) -> list[Any]:
+        """
+        Retrieve open trades
+        """
+        return Trade.get_trades_proxy(pair = pair, is_open=True, open_date=open_date, is_short = is_short)
 
     @staticmethod
     def get_open_trade_count() -> int:
@@ -1789,6 +1802,7 @@ class Trade(ModelBase, LocalTrade):
         is_open: bool | None = None,
         open_date: datetime | None = None,
         close_date: datetime | None = None,
+        is_short: bool | None = None,
     ) -> list["LocalTrade"]:
         """
         Helper function to query Trades.j
@@ -1808,10 +1822,12 @@ class Trade(ModelBase, LocalTrade):
                 trade_filter.append(Trade.close_date > close_date)
             if is_open is not None:
                 trade_filter.append(Trade.is_open.is_(is_open))
+            if is_short is not None:
+                trade_filter.append(Trade.is_short.is_(is_short))
             return cast(list[LocalTrade], Trade.get_trades(trade_filter).all())
         else:
             return LocalTrade.get_trades_proxy(
-                pair=pair, is_open=is_open, open_date=open_date, close_date=close_date
+                pair=pair, is_open=is_open, open_date=open_date, close_date=close_date, is_short= is_short
             )
 
     @staticmethod

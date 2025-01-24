@@ -42,6 +42,7 @@ from freqtrade.exchange import (
     timeframe_to_minutes,
     timeframe_to_next_date,
     timeframe_to_seconds,
+    date_minus_candles,
 )
 from freqtrade.exchange.exchange_types import CcxtOrder
 from freqtrade.leverage.liquidation_price import update_liquidation_prices
@@ -712,10 +713,14 @@ class FreqtradeBot(LoggingMixin):
             # todo: 修改成pairlock的形式
             # 按说上面的代码应该锁住了，不知道为什么锁不住
             if self.config.get("dual_side", False):
-                for trade in Trade.get_open_trades():
-                    if trade.pair == pair and trade.is_short == (signal == SignalDirection.SHORT):
-                        logger.info(f"{pair} {trade.is_short}已经建仓，不用重复下单建仓")
-                        return False
+                recent_trades = Trade.get_open_trades_with_pair_side_opendate(
+                        pair = pair,
+                        is_short = (signal == SignalDirection.SHORT),
+                        open_date = date_minus_candles(self.strategy.timeframe, 1, datetime.now(timezone.utc)),
+                    )
+                if len(recent_trades) > 0:
+                    logger.info(f"{pair} {signal}在一个蜡烛周期内已经建仓，不用重复下单建仓")
+                    return False
             stake_amount = self.wallets.get_trade_stake_amount(
                 pair, self.config["max_open_trades"], self.edge
             )
@@ -833,6 +838,7 @@ class FreqtradeBot(LoggingMixin):
                 return
 
             remaining = (trade.amount - amount) * current_exit_rate
+
             if min_exit_stake and remaining != 0 and remaining < min_exit_stake:
                 logger.info(
                     f"Remaining amount of {remaining} would be smaller "
