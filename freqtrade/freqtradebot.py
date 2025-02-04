@@ -716,10 +716,9 @@ class FreqtradeBot(LoggingMixin):
                 recent_trades = Trade.get_open_trades_with_pair_side_opendate(
                         pair = pair,
                         is_short = (signal == SignalDirection.SHORT),
-                        open_date = date_minus_candles(self.strategy.timeframe, 1, datetime.now(timezone.utc)),
                     )
                 if len(recent_trades) > 0:
-                    logger.info(f"{pair} {signal}在一个蜡烛周期内已经建仓，不用重复下单建仓")
+                    logger.info(f"{pair} {signal} 已经建仓，不用重复下单建仓")
                     return False
             stake_amount = self.wallets.get_trade_stake_amount(
                 pair, self.config["max_open_trades"], self.edge
