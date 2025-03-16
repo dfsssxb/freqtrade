@@ -25,7 +25,7 @@ from freqtrade.enums import (
     TradingMode,
 )
 from freqtrade.exceptions import OperationalException, StrategyError
-from freqtrade.exchange import timeframe_to_minutes, timeframe_to_next_date, timeframe_to_seconds
+from freqtrade.exchange import timeframe_to_minutes, timeframe_to_next_date, timeframe_to_seconds, date_minus_candles
 from freqtrade.misc import remove_entry_exit_signals
 from freqtrade.persistence import Order, PairLocks, Trade
 from freqtrade.strategy.hyper import HyperStrategyMixin
@@ -1158,10 +1158,12 @@ class IStrategy(ABC, HyperStrategyMixin):
         """
         if not isinstance(dataframe, DataFrame) or dataframe.empty:
             logger.warning(f"Empty candle (OHLCV) data for pair {pair}")
-            return None, None
+            return None, None, None
 
         latest_date_pd = dataframe["date"].max()
         latest = dataframe.loc[dataframe["date"] == latest_date_pd].iloc[-1]
+        prior_date = date_minus_candles(timeframe, 1, latest_date_pd)
+        prior = dataframe.loc[dataframe["date"] == prior_date].iloc[-1]
         # Explicitly convert to datetime object to ensure the below comparison does not fail
         latest_date: datetime = latest_date_pd.to_pydatetime()
 
@@ -1174,8 +1176,8 @@ class IStrategy(ABC, HyperStrategyMixin):
                 pair,
                 int((dt_now() - latest_date).total_seconds() // 60),
             )
-            return None, None
-        return latest, latest_date
+            return None, None, None
+        return latest, latest_date, prior
 
     def get_exit_signal(
         self, pair: str, timeframe: str, dataframe: DataFrame, is_short: bool | None = None
@@ -1191,7 +1193,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         :param is_short: Indicating existing trade direction.
         :return: (enter, exit) A bool-tuple with enter / exit values.
         """
-        latest, _latest_date = self.get_latest_candle(pair, timeframe, dataframe)
+        latest, _latest_date, prior = self.get_latest_candle(pair, timeframe, dataframe)
         if latest is None:
             return False, False, None
 
@@ -1203,6 +1205,16 @@ class IStrategy(ABC, HyperStrategyMixin):
             enter = latest.get(SignalType.ENTER_LONG.value, 0) == 1
             exit_ = latest.get(SignalType.EXIT_LONG.value, 0) == 1
         exit_tag = latest.get(SignalTagType.EXIT_TAG.value, None)
+        if not any([enter, exit_]):
+            latest = prior
+            if is_short:
+                enter = latest.get(SignalType.ENTER_SHORT.value, 0) == 1
+                exit_ = latest.get(SignalType.EXIT_SHORT.value, 0) == 1
+
+            else:
+                enter = latest.get(SignalType.ENTER_LONG.value, 0) == 1
+                exit_ = latest.get(SignalType.EXIT_LONG.value, 0) == 1
+            exit_tag = latest.get(SignalTagType.EXIT_TAG.value, None)
         # Tags can be None, which does not resolve to False.
         exit_tag = exit_tag if isinstance(exit_tag, str) and exit_tag != "nan" else None
 
@@ -1225,7 +1237,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         :param dataframe: Analyzed dataframe to get signal from.
         :return: (SignalDirection, entry_tag)
         """
-        latest, latest_date = self.get_latest_candle(pair, timeframe, dataframe)
+        latest, latest_date, prior = self.get_latest_candle(pair, timeframe, dataframe)
         if latest is None or latest_date is None:
             return None, None
 
@@ -1233,7 +1245,12 @@ class IStrategy(ABC, HyperStrategyMixin):
         exit_long = latest.get(SignalType.EXIT_LONG.value, 0) == 1
         enter_short = latest.get(SignalType.ENTER_SHORT.value, 0) == 1
         exit_short = latest.get(SignalType.EXIT_SHORT.value, 0) == 1
-
+        if not any([enter_long, exit_long, enter_short, exit_short]):
+            latest = prior
+            enter_long = latest.get(SignalType.ENTER_LONG.value, 0) == 1
+            exit_long = latest.get(SignalType.EXIT_LONG.value, 0) == 1
+            enter_short = latest.get(SignalType.ENTER_SHORT.value, 0) == 1
+            exit_short = latest.get(SignalType.EXIT_SHORT.value, 0) == 1
         enter_signal: SignalDirection | None = None
         enter_tag: str | None = None
         if enter_long == 1 and not any([exit_long, enter_short]):
