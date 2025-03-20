@@ -572,7 +572,7 @@ class FreqtradeBot(LoggingMixin):
             else:
                 trade.exit_reason = prev_exit_reason
                 total = (
-                    self.wallets.get_owned(trade.pair, trade.base_currency)
+                    self.wallets.get_owned(trade.pair, trade.base_currency, trade.is_short)
                     if trade.base_currency
                     else 0
                 )

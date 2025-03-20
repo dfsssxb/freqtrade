@@ -84,13 +84,17 @@ class Wallets:
             )
         return self.get_total(self._stake_currency)
 
-    def get_owned(self, pair: str, base_currency: str) -> float:
+    def get_owned(self, pair: str, base_currency: str, is_short: bool) -> float:
         """
         Get currently owned value.
         Designed to work across both spot and futures.
         """
         if self._config.get("trading_mode", "spot") != TradingMode.FUTURES:
             return self.get_total(base_currency) or 0
+        if self._config.get("dual_side", False):
+            side = "short" if is_short else "long"
+            if pos := self._positions.get(pair + "_" + side):
+                return pos.position
         if pos := self._positions.get(pair):
             return pos.position
         return 0
@@ -220,7 +224,7 @@ class Wallets:
         if (
             require_update
             or self._last_wallet_refresh is None
-            or (self._last_wallet_refresh + timedelta(seconds=3600) < now)
+            or (self._last_wallet_refresh + timedelta(seconds=60) < now)
         ):
             if not self._config["dry_run"] or self._config.get("runmode") == RunMode.LIVE:
                 self._update_live()
@@ -249,7 +253,7 @@ class Wallets:
                 return False
             wallet_amount = position.position
 
-        if wallet_amount >= trade.amount:
+        if wallet_amount == trade.amount:
             return True
         return False
 

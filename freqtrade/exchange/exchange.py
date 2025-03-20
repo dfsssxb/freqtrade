@@ -3702,7 +3702,7 @@ class Exchange:
         taker_fee_rate = market["taker"]
         mm_ratio, _ = self.get_maintenance_ratio_and_amt(pair, stake_amount)
 
-        if self.trading_mode == TradingMode.FUTURES and self.margin_mode == MarginMode.ISOLATED:
+        if self.trading_mode == TradingMode.FUTURES and self.margin_mode in [MarginMode.ISOLATED, MarginMode.CROSS]:
             if market["inverse"]:
                 raise OperationalException("Freqtrade does not yet support inverse contracts")
 
