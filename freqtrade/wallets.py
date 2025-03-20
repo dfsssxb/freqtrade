@@ -31,6 +31,7 @@ class PositionWallet(NamedTuple):
     leverage: float | None = 0  # Don't use this - it's not guaranteed to be set
     collateral: float = 0
     side: str = "long"
+    entry_price: float = 0
     dt: datetime | None = None
 
 class Wallets:
@@ -147,6 +148,7 @@ class Wallets:
                     leverage=position.leverage,
                     collateral=position.stake_amount,
                     side=position.trade_direction,
+                    entry_price=position.open_rate,
                     dt=position.open_date,
                 )
 
@@ -209,6 +211,7 @@ class Wallets:
                 leverage=leverage,
                 collateral=collateral,
                 side=position["side"],
+                entry_price=position["info"]["entryPrice"],
                 dt=datetime.strptime(position["datetime"], "%Y-%m-%dT%H:%M:%S.%f%z"),
             )
         self._positions = _parsed_positions
