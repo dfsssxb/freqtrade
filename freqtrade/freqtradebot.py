@@ -264,6 +264,9 @@ class FreqtradeBot(LoggingMixin):
 
         self.active_pair_whitelist = self._refresh_active_whitelist(trades)
 
+        # check unknown trade
+        self.check_unknown_trades(self.active_pair_whitelist)
+
         # Refreshing candles
         self.dataprovider.refresh(
             self.pairlists.create_pair_list(self.active_pair_whitelist),
@@ -301,6 +304,50 @@ class FreqtradeBot(LoggingMixin):
         Trade.commit()
         self.rpc.process_msg_queue(self.dataprovider._msg_queue)
         self.last_process = datetime.now(timezone.utc)
+
+    def check_unknown_trades(self, pair_whitelist) -> None:
+        if self.config.get("dual_side", False):
+            cnt = 0
+            positions = self.wallets.get_all_positions()
+            for pair in pair_whitelist:
+                for is_short in [False, True]:
+                    side = "short" if is_short else "long"
+                    if pos := positions.get(pair+"_" + side):
+                        if len(Trade.get_open_trades_with_pair_side_opendate(pair = pair,is_short = is_short)) > 0:  # noqa: E501
+                            continue
+                        trade = Trade(
+                                    pair=pair,
+                                    base_currency=self.exchange.get_pair_base_currency(pair),
+                                    stake_currency=self.config["stake_currency"],
+                                    stake_amount=0,
+                                    amount=0,
+                                    is_open=True,
+                                    amount_requested=pos.position,
+                                    fee_open=0,
+                                    fee_close=0,
+                                    open_rate=pos.entry_price,
+                                    open_rate_requested=pos.entry_price,
+                                    open_date=pos.dt,
+                                    exchange=self.exchange.id,
+                                    strategy=self.strategy.get_strategy_name(),
+                                    enter_tag='手动',
+                                    timeframe=timeframe_to_minutes(self.config["timeframe"]),
+                                    leverage=100,
+                                    is_short=is_short,
+                                    trading_mode=self.trading_mode,
+                                    funding_fees=0,
+                                    amount_precision=self.exchange.get_precision_amount(pair),
+                                    price_precision=self.exchange.get_precision_price(pair),
+                                    precision_mode=self.exchange.precisionMode,
+                                    precision_mode_price=self.exchange.precision_mode_price,
+                                    contract_size=1.0,
+                                )
+                        Trade.session.add(trade)
+                        cnt += 1
+            if cnt > 0:
+                Trade.commit()
+        return None
+
 
     def process_stopped(self) -> None:
         """
