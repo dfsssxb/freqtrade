@@ -265,7 +265,8 @@ class FreqtradeBot(LoggingMixin):
         self.active_pair_whitelist = self._refresh_active_whitelist(trades)
 
         # check unknown trade
-        self.check_unknown_trades(self.active_pair_whitelist)
+        with self._exit_lock:
+            self.check_unknown_trades(self.active_pair_whitelist)
 
         # Refreshing candles
         self.dataprovider.refresh(
@@ -313,9 +314,15 @@ class FreqtradeBot(LoggingMixin):
                 for is_short in [False, True]:
                     side = "short" if is_short else "long"
                     if pos := positions.get(pair+"_" + side):
-                        if len(Trade.get_open_trades_with_pair_side_opendate(pair = pair,is_short = is_short)) > 0:  # noqa: E501
-                            continue
-                        trade = Trade(
+                        trades = Trade.get_open_trades_with_pair_side_opendate(pair = pair,is_short = is_short)
+                        if len(trades) > 0:
+                            trade = trades[0]
+                            if trades.leverage != pos.leverage:
+                                cnt += 1
+                                trades.leverage = pos.leverage
+                                Trade.session.refresh(trade)
+                        else:
+                            trade = Trade(
                                     pair=pair,
                                     base_currency=self.exchange.get_pair_base_currency(pair),
                                     stake_currency=self.config["stake_currency"],
@@ -342,8 +349,8 @@ class FreqtradeBot(LoggingMixin):
                                     precision_mode_price=self.exchange.precision_mode_price,
                                     contract_size=1.0,
                                 )
-                        Trade.session.add(trade)
-                        cnt += 1
+                            cnt += 1
+                            Trade.session.add(trade)
             if cnt > 0:
                 Trade.commit()
         return None
