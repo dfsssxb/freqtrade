@@ -322,6 +322,8 @@ class FreqtradeBot(LoggingMixin):
             if len(trades) > 0:
                 trade = trades[0]
                 if trade.leverage != pos.leverage:
+                    logger.info(f"update position leverage. \
+                                {pair},{is_short},{trade.leverage},{pos.leverage}")
                     cnt += 1
                     trade.leverage = pos.leverage
                     Trade.session.refresh(trade)
@@ -353,6 +355,7 @@ class FreqtradeBot(LoggingMixin):
                     precision_mode_price=self.exchange.precision_mode_price,
                     contract_size=1.0,
                 )
+                logger.info(f"add unkown position.{pair},{is_short}")
                 cnt += 1
                 Trade.session.add(trade)
         if cnt > 0:
