@@ -332,7 +332,7 @@ class FreqtradeBot(LoggingMixin):
                                     strategy=self.strategy.get_strategy_name(),
                                     enter_tag='手动',
                                     timeframe=timeframe_to_minutes(self.config["timeframe"]),
-                                    leverage=100,
+                                    leverage=pos.leverage,
                                     is_short=is_short,
                                     trading_mode=self.trading_mode,
                                     funding_fees=0,

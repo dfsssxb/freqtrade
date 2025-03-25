@@ -5,6 +5,8 @@ import logging
 from datetime import datetime, timedelta
 from typing import NamedTuple
 
+from ccxt import TRUNCATE, decimal_to_precision
+
 from freqtrade.constants import UNLIMITED_STAKE_AMOUNT, Config, IntOrInf
 from freqtrade.enums import RunMode, TradingMode
 from freqtrade.exceptions import DependencyException
@@ -204,7 +206,11 @@ class Wallets:
                 continue
             size = self._exchange._contracts_to_amount(symbol, position["contracts"])
             collateral = safe_value_fallback(position, "collateral", "initialMargin", 0.0)
-            leverage = position.get("leverage")
+            # leverage = position.get("leverage")
+            leverage = 20.0
+            if position.get("notional")> 0 and position.get("initialMargin") > 0:
+                leverage = position.get("notional") / position.get("initialMargin")
+                leverage = float(decimal_to_precision(leverage,rounding_mode=TRUNCATE, precision=3))
             _parsed_positions[symbol+"_"+position["side"]] = PositionWallet(
                 symbol,
                 position=size,
