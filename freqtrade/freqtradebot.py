@@ -324,9 +324,8 @@ class FreqtradeBot(LoggingMixin):
                 if trade.leverage != pos.leverage:
                     logger.info(f"update position leverage. \
                                 {pair},{is_short},{trade.leverage},{pos.leverage}")
-                    cnt += 1
                     trade.leverage = pos.leverage
-                    Trade.session.refresh(trade)
+                    Trade.session.commit()
             else:
                 trade = Trade(
                     pair=pair,
