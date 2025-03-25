@@ -321,9 +321,9 @@ class FreqtradeBot(LoggingMixin):
             trades = Trade.get_open_trades_with_pair_side_opendate(pair = pair,is_short = is_short)
             if len(trades) > 0:
                 trade = trades[0]
-                if trades.leverage != pos.leverage:
+                if trade.leverage != pos.leverage:
                     cnt += 1
-                    trades.leverage = pos.leverage
+                    trade.leverage = pos.leverage
                     Trade.session.refresh(trade)
             else:
                 trade = Trade(
