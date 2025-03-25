@@ -5,7 +5,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import NamedTuple
 
-from ccxt import TRUNCATE, decimal_to_precision
+from ccxt import ROUND, decimal_to_precision
 
 from freqtrade.constants import UNLIMITED_STAKE_AMOUNT, Config, IntOrInf
 from freqtrade.enums import RunMode, TradingMode
@@ -210,7 +210,7 @@ class Wallets:
             leverage = 20.0
             if position.get("notional")> 0 and position.get("initialMargin") > 0:
                 leverage = position.get("notional") / position.get("initialMargin")
-                leverage = float(decimal_to_precision(leverage,rounding_mode=TRUNCATE, precision=3))
+                leverage = float(decimal_to_precision(leverage,rounding_mode=ROUND, precision=3))
             _parsed_positions[symbol+"_"+position["side"]] = PositionWallet(
                 symbol,
                 position=size,
