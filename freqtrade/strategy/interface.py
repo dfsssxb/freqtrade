@@ -1277,7 +1277,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         ):
             return None, enter_tag
 
-        logger.debug(
+        logger.info(
             f"entry trigger: {latest['date']} (pair={pair}) "
             f"enter={enter_long} enter_tag_value={enter_tag}"
         )

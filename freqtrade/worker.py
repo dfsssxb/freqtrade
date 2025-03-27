@@ -174,7 +174,7 @@ class Worker:
         sleep_duration = max(sleep_duration, 0.0)
         # next_iter = datetime.now(timezone.utc) + timedelta(seconds=sleep_duration)
 
-        logger.debug(
+        logger.info(
             f"Throttling with '{func.__name__}()': sleep for {sleep_duration:.2f} s, "
             f"last iteration took {time_passed:.2f} s."
             #  f"next: {next_iter}"
