@@ -992,12 +992,11 @@ class RPC:
         # check if valid pair
 
         # check if pair already has an open pair
-        trade: Trade | None = Trade.get_trades(
-            [Trade.is_open.is_(True), Trade.pair == pair]
-        ).first()
         is_short = order_side == SignalDirection.SHORT
+        trade: Trade | None = Trade.get_trades(
+            [Trade.is_open.is_(True), Trade.pair == pair, Trade.is_short.is_(is_short)]
+        ).first()
         if trade:
-            is_short = trade.is_short
             if not self._freqtrade.strategy.position_adjustment_enable:
                 raise RPCException(f"position for {pair} already open - id: {trade.id}")
             if trade.has_open_orders:
