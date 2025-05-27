@@ -597,6 +597,11 @@ class FreqtradeBot(LoggingMixin):
                     )
                     continue
 
+                if order['price'] is None or order['amount'] is None:
+                    logger.warning(
+                        f"{trade.pair} exchange order {order['id']} does not have price or amount."
+                    )
+                    continue
                 trade_order = [o for o in trade.orders if o.order_id == order["id"]]
 
                 if trade_order:
