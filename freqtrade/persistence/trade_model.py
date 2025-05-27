@@ -80,7 +80,7 @@ class Order(ModelBase):
 
     # Uniqueness should be ensured over pair, order_id
     # its likely that order_id is unique per Pair on some exchanges.
-    __table_args__ = (UniqueConstraint("ft_pair", "order_id", name="_order_pair_order_id"),)
+    # __table_args__ = (UniqueConstraint("ft_pair", "order_id", name="_order_pair_order_id"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     ft_trade_id: Mapped[int] = mapped_column(Integer, ForeignKey("trades.id"), index=True)
