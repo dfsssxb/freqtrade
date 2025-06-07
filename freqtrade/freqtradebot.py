@@ -578,7 +578,7 @@ class FreqtradeBot(LoggingMixin):
         """
         try:
             orders = self.exchange.fetch_orders(
-                trade.pair, trade.open_date_utc - timedelta(seconds=10)
+                trade.pair, trade.open_date_utc - timedelta(days=1)
             )
             prev_exit_reason = trade.exit_reason
             prev_trade_state = trade.is_open
@@ -612,9 +612,12 @@ class FreqtradeBot(LoggingMixin):
 
                     order_obj = Order.parse_from_ccxt_object(order, trade.pair, order["side"])
                     order_obj.order_filled_date = datetime.fromtimestamp(
-                        safe_value_fallback(order, "lastTradeTimestamp", "timestamp") // 1000,
+                        safe_value_fallback(order, "lastTradeTimestamp", "timestamp") / 1000.0,
                         tz=timezone.utc,
                     )
+                    if order_obj.order_filled_date < trade.open_date_utc:
+                        logger.info(f"Unexpected Order {order['id']} was filled before {trade.pair} {trade.id}")
+                        continue
                     trade.orders.append(order_obj)
                     Trade.commit()
                     trade.exit_reason = ExitType.SOLD_ON_EXCHANGE.value
