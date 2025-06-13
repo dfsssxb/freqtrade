@@ -578,7 +578,7 @@ class FreqtradeBot(LoggingMixin):
         """
         try:
             orders = self.exchange.fetch_orders(
-                trade.pair, trade.open_date_utc - timedelta(days=1)
+                trade.pair, trade.date_last_filled_utc - timedelta(days=1)
             )
             prev_exit_reason = trade.exit_reason
             prev_trade_state = trade.is_open
