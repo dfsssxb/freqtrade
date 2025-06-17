@@ -213,7 +213,7 @@ def amount_to_precision(
         amount = float(
             decimal_to_precision(
                 amount,
-                rounding_mode=TRUNCATE,
+                rounding_mode=ROUND,
                 precision=precision,
                 counting_mode=precisionMode,
             )
