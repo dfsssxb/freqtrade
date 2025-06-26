@@ -607,6 +607,12 @@ class FreqtradeBot(LoggingMixin):
                 if trade_order:
                     # We knew this order, but didn't have it updated properly
                     order_obj = trade_order[0]
+                    # 成交金额相同不用引发数据更新
+                    if order_obj.filled == order["filled"]:
+                        logger.info(
+                            f"Order {order['id']} for {trade.pair} {trade.id} is already up to date."
+                        )
+                        continue
                 else:
                     logger.info(f"Found previously unknown order {order['id']} for {trade.pair}.")
 
